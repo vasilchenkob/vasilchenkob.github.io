@@ -5,32 +5,54 @@ date: "May 22, 2019"
 output: html_document
 ---
 
-# Yelp
+# Cell Phone Data
 
 ## Intro
+
+## Libraries
+
+```{r}
+library(stringr)
+library(tidyverse)
+```
 
 ## Data
 
 ### Raw Data
 
-The raw data is the Yelp dataset which can be found on [Kaggle](https://www.kaggle.com/yelp-dataset/yelp-dataset) and the [Yelp Website](https://www.yelp.com/dataset/).
+We are using the dataset [1.4 Million Phone Reviews](https://www.kaggle.com/masaladata/14-million-cell-phone-reviews) from Kaggle. This dataset encompasses over 1.4 million reviews across various brands, models, countries, languages, and websites.
 
-The data comes in 6 JSON objects:
-- Businesses
-- Check ins
-- Reviews
-- Tips
-- Users
-- 
+```{r}
+review1 <- read.csv("data/phone_user_review_file_1.csv")
+review2 <- read.csv("data/phone_user_review_file_2.csv")
+review3 <- read.csv("data/phone_user_review_file_3.csv")
+review4 <- read.csv("data/phone_user_review_file_4.csv")
+review5 <- read.csv("data/phone_user_review_file_5.csv")
+review6 <- read.csv("data/phone_user_review_file_6.csv")
+```
 
-In order to import this data into an R dataframe, a few alterations must be made from the original JSON format:
-- null must be converted to NA
-- nested attributes must be flattened out
+```{r}
+reviews <- rbind.fill(review1, review2, review3, review4, review5, review6)
 
-Fortunately, many packages exist that will do this conversion for you, such as _______ which we will use here.
+reviews
+```
 
 ### Alterations
 
 ## EDA
+
+```{r}
+reviews_bm <- reviews %>%
+  na.omit() %>%
+  separate(product, c("brand", "model"), extra = "merge") %>%
+  mutate(brand = tolower(brand), model = tolower(model))
+```
+
+```{r}
+reviews_bm %>%
+  group_by(brand) %>%
+  summarize(count = n()) %>%
+  filter(rank(desc(count))<=10)
+```
 
 ## Hypothesis Testing and ML
