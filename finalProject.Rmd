@@ -35,7 +35,7 @@ review6 <- read.csv("data/phone_user_review_file_6.csv")
 reviews <- rbind.fill(review1, review2, review3, review4, review5, review6)
 ```
 
-The data is contained within six different CSVs that all have the same format, so they can easily be stitched together into one large data frame with rbind from the dplyr package in tidyverse.
+The data is contained within six different CSVs which we can read in with read.csv. They all have the same format, so they can easily be stitched together into one large data frame with [rbind](http://www.endmemo.com/program/R/rbind.php) from the dplyr package in tidyverse.
 
 ### Data Cleaning
 
@@ -49,11 +49,11 @@ reviews <- reviews %>%
 reviews
 ```
 
-In order to clean up the data, there are some changes we want to make. First, the phone_url serves as an identifier for the make and model of a phone; however, all phone-url entries start with /cellphone/ and end with /. We remove these to get a cleaned version of phone_url that we will use in the next data wrangling process.
+In order to clean up the data, there are some changes we want to make. First, the phone_url serves as an identifier for the make and model of a phone; however, all phone-url entries start with /cellphone/ and end with /. We remove these to get a cleaned version of phone_url that we will use in the next data wrangling process. We chose to use phone_url instead of product as the phone identifier, since the values are more consistent in this attribute.
 
-We also need to type convert the date from M/D/Y format into a digital date value.
+We also need to type convert the date from M/D/Y format into a digital date value. This can be done with the conversion function [as.Date](https://www.statmethods.net/input/dates.html).
 
-Lastly, we decide to omit any data that contains NA values. Because we have over 1.4 million reviews that we pull from, we have the luxury of being able to omit all NA entries without hurting the magnitide of our sample size. (1.4m -> 1.3m)
+Lastly, we decide to omit any data that contains NA values. Making any calculations with attributes that are NA would mess with the calculations. Because we have over 1.4 million reviews that we pull from, we have the luxury of being able to omit all NA entries without hurting the magnitide of our sample size. (1.4m -> 1.3m)
 
 ```{r}
 reviews_bm <- reviews %>%
@@ -66,12 +66,27 @@ The most common way people refer to a phone is by it's brand and model name: E.g
 
 ## EDA
 
+Now that our data is clean and usable, we can think about what interesting patterns we can find in the data. One interesting piece of information we are given is country of the person writing the review, so there is a chance that we can observe a correlation in average scores given and country. Do people from different countries tend to be more positive or negative with their reviews?
+
+### Country Optimism
 ```{r}
-reviews_bm %>%
-  group_by(brand, model) %>%
-  summarize(count = n(), mean_score = mean(score)) %>%
-  sort(mean_score)
+country_reviews = reviews %>%
+  filter(!is.na(score)) %>%
+  group_by(country) %>%
+  summarize(mean_score = mean(score))
+
+country_reviews
+
+country_reviews %>%
+  ggplot() +
+  geom_bar(aes(country,mean_score), stat = "identity") + coord_cartesian(ylim=c(6.0,10.0)) +
+  geom_bar(data=subset(country_reviews, mean_score==min(mean_score)), aes(country, mean_score), fill="red", stat="identity") +
+  geom_bar(data=subset(country_reviews, mean_score==max(mean_score)), aes(country, mean_score), fill="cyan", stat="identity") 
+
 ```
+we were interested in seeing the average score by country of the user. From this, we can see that the most optimistic reviewers are from Switzerland (country code ch) and the most pessimistic are from India (country code in). This was achieved by grouping the data by country and summarized by the mean score. This was then plotted with a bar graph, and the minimum and maximum values were highlighted. 
+
+We also deciding looking at the way in which reviews change over time. Here we look at a specific example that we suspected to have a change in rating.
 
 ### Galaxy Note 7
 ```{r}
@@ -89,22 +104,6 @@ note_reviews %>%
 ```
 Knowing about the [unfortunate events](https://www.theverge.com/2016/9/2/12767670/samsung-galaxy-note-7-recall-fire-risk) following the release of the Note 7, we were interested to see what the effect was on the online rating. We mapped the mean score for the phone over time, and plotted the date when the phone was recalled (September 2nd, 2016). To do this, we filtered the dataframe by phone name to only display data about the Note 7, then grouped by date and summarized by the mean score to get the mean score for each day. Then, we chose to display the results with a smoothed line graph to illustrate how the scores trended over time. It can be seen that the scores started to drop shortly before the phone was recalled. 
 
-### Country Optimism
-```{r}
-country_reviews = reviews %>%
-  filter(!is.na(score)) %>%
-  group_by(country) %>%
-  summarize(mean_score = mean(score))
-country_reviews
-
-country_reviews %>%
-  ggplot() +
-  geom_bar(aes(country,mean_score), stat = "identity") + coord_cartesian(ylim=c(6.0,10.0)) +
-  geom_bar(data=subset(country_reviews, mean_score==min(mean_score)), aes(country, mean_score), fill="red", stat="identity") +
-  geom_bar(data=subset(country_reviews, mean_score==max(mean_score)), aes(country, mean_score), fill="cyan", stat="identity") 
-
-```
-we were interested in seeing the average score by country of the user. From this, we can see that the most optimistic reviewers are from Switzerland (country code ch) and the most pessimistic are from Singapore (country code sg). This was achieved by grouping the data by country and summarized by the mean score. This was then plotted with a bar graph, and the minimum and maximum values were highlighted. 
-
-
 ## Hypothesis Testing and ML
+
+Knowing that for at least one case time has an effect on reviews, we can look at the data more generally. With the help of linear regression we can determine if time has an affect on phone scores across all phones. 
