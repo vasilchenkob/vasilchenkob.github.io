@@ -60,7 +60,7 @@ reviews_bm %>%
   sort(mean_score)
 ```
 
-
+### Galaxy Note 7
 ```{r}
 
 note_reviews = reviews %>%
@@ -74,18 +74,24 @@ note_reviews %>%
   geom_point() + geom_smooth(method=lm) + geom_vline(xintercept = as.numeric(as.Date("2016-09-02")), color="red")
 
 ```
+Knowing about the [unfortunate events](https://www.theverge.com/2016/9/2/12767670/samsung-galaxy-note-7-recall-fire-risk) following the release of the Note 7, we were interested to see what the effect was on the online rating. We mapped the mean score for the phone over time, and plotted the date when the phone was recalled (September 2nd, 2016). To do this, we filtered the dataframe by phone name to only display data about the Note 7, then grouped by date and summarized by the mean score to get the mean score for each day. Then, we chose to display the results with a smoothed line graph to illustrate how the scores trended over time. It can be seen that the scores started to drop shortly before the phone was recalled. 
 
+### Country Optimism
 ```{r}
 country_reviews = reviews %>%
   filter(!is.na(score)) %>%
   group_by(country) %>%
   summarize(mean_score = mean(score))
-
 country_reviews
 
 country_reviews %>%
-  ggplot(aes(country,mean_score)) +
-  geom_bar(stat = "identity")
+  ggplot() +
+  geom_bar(aes(country,mean_score), stat = "identity") + coord_cartesian(ylim=c(6.0,10.0)) +
+  geom_bar(data=subset(country_reviews, mean_score==min(mean_score)), aes(country, mean_score), fill="red", stat="identity") +
+  geom_bar(data=subset(country_reviews, mean_score==max(mean_score)), aes(country, mean_score), fill="cyan", stat="identity") 
+
 ```
+we were interested in seeing the average score by country of the user. From this, we can see that the most optimistic reviewers are from Switzerland (country code ch) and the most pessimistic are from Singapore (country code sg). This was achieved by grouping the data by country and summarized by the mean score. This was then plotted with a bar graph, and the minimum and maximum values were highlighted. 
+
 
 ## Hypothesis Testing and ML
