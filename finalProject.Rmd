@@ -33,28 +33,41 @@ review6 <- read.csv("data/phone_user_review_file_6.csv")
 
 ```{r}
 reviews <- rbind.fill(review1, review2, review3, review4, review5, review6)
+```
+
+The data is contained within six different CSVs that all have the same format, so they can easily be stitched together into one large data frame with rbind from the dplyr package in tidyverse.
+
+### Data Cleaning
+
+```{r}
 reviews$phone_url = substring(reviews$phone_url, 13, str_length(reviews$phone_url)-1)
 reviews$date = as.Date(reviews$date, "%m/%d/%Y")
+
+reviews <- reviews %>%
+  na.omit()
 
 reviews
 ```
 
-### Data Cleaning
+In order to clean up the data, there are some changes we want to make. First, the phone_url serves as an identifier for the make and model of a phone; however, all phone-url entries start with /cellphone/ and end with /. We remove these to get a cleaned version of phone_url that we will use in the next data wrangling process.
 
+We also need to type convert the date from M/D/Y format into a digital date value.
+
+Lastly, we decide to omit any data that contains NA values. Because we have over 1.4 million reviews that we pull from, we have the luxury of being able to omit all NA entries without hurting the magnitide of our sample size. (1.4m -> 1.3m)
 
 ```{r}
 reviews_bm <- reviews %>%
-  na.omit() %>%
   separate(phone_url, c("brand", "model"), sep = "-", extra = "merge")
 
 reviews_bm
 ```
 
+The most common way people refer to a phone is by it's brand and model name: E.g. Samsung Galaxy S8. These only exist together as part of the phone_url, but in order to do analysis on only a specific brand of phone or a specific model we need to separate them. Fortunately, the phone_url uses a standardized layout: [brand]-[model]. All we have to do is separate phone_url on the first - character.
+
 ## EDA
 
 ```{r}
 reviews_bm %>%
-  na.omit() %>%
   group_by(brand, model) %>%
   summarize(count = n(), mean_score = mean(score)) %>%
   sort(mean_score)
