@@ -39,9 +39,7 @@ reviews$date = as.Date(reviews$date, "%m/%d/%Y")
 reviews
 ```
 
-### Alterations
-
-## EDA
+### Data Cleaning
 
 ```{r}
 reviews_bm <- reviews %>%
@@ -49,6 +47,9 @@ reviews_bm <- reviews %>%
   separate(product, c("brand", "model"), extra = "merge") %>%
   mutate(brand = tolower(brand), model = tolower(model))
 ```
+
+## EDA
+
 
 ```{r}
 reviews_bm %>%
@@ -63,7 +64,12 @@ reviews_bm %>%
 note_reviews = reviews %>%
   filter(phone_url=="samsung-galaxy-note-7") %>%
   group_by(date) %>%
-  summarize(mean(score))
+  summarize(mean_score=mean(score))
+note_reviews
+
+note_reviews %>%
+  ggplot(aes(date,mean_score)) +
+  geom_point() + geom_smooth(method=lm) + geom_vline(xintercept = as.numeric(as.Date("2016-09-02")), color="red")
 
 ```
 
