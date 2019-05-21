@@ -33,6 +33,8 @@ review6 <- read.csv("data/phone_user_review_file_6.csv")
 
 ```{r}
 reviews <- rbind.fill(review1, review2, review3, review4, review5, review6)
+reviews$phone_url = substring(reviews$phone_url, 13, str_length(reviews$phone_url)-1)
+reviews$date = as.Date(reviews$date, "%m/%d/%Y")
 
 reviews
 ```
@@ -54,5 +56,27 @@ reviews_bm %>%
   summarize(count = n()) %>%
   filter(rank(desc(count))<=10)
 ```
+
+
+```{r}
+
+note_reviews = reviews %>%
+  filter(phone_url=="samsung-galaxy-note-7") %>%
+  group_by(date) %>%
+  summarize(mean(score))
+
+```
+
+```{r}
+country_reviews = reviews %>%
+  filter(!is.na(score)) %>%
+  group_by(country) %>%
+  summarize(mean_score = mean(score))
+
+country_reviews
+
+country_reviews %>%
+  ggplot(aes(country,mean_score)) +
+  geom_bar(stat = "identity")
 
 ## Hypothesis Testing and ML
