@@ -41,21 +41,23 @@ reviews
 
 ### Data Cleaning
 
+
 ```{r}
 reviews_bm <- reviews %>%
   na.omit() %>%
-  separate(product, c("brand", "model"), extra = "merge") %>%
-  mutate(brand = tolower(brand), model = tolower(model))
+  separate(phone_url, c("brand", "model"), sep = "-", extra = "merge")
+
+reviews_bm
 ```
 
 ## EDA
 
-
 ```{r}
 reviews_bm %>%
-  group_by(brand) %>%
-  summarize(count = n()) %>%
-  filter(rank(desc(count))<=10)
+  na.omit() %>%
+  group_by(brand, model) %>%
+  summarize(count = n(), mean_score = mean(score)) %>%
+  sort(mean_score)
 ```
 
 
@@ -84,5 +86,6 @@ country_reviews
 country_reviews %>%
   ggplot(aes(country,mean_score)) +
   geom_bar(stat = "identity")
+```
 
 ## Hypothesis Testing and ML
