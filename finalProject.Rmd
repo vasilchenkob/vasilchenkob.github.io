@@ -9,6 +9,8 @@ output: html_document
 
 ## Intro
 
+Online reviews of products can give a buyer a good idea on which item they should choose. It is also common knowledge that online reviews are subjective, can be very arbitrary and are biased in ways unrelated to the product itself. There are a lot of patterns to analyse in these subjective reviews, and we are particularly interested in looking at reviews of cellphones - something that people heavily rely on in their daily life.
+
 ## Libraries
 
 ```{r}
@@ -20,7 +22,7 @@ library(tidyverse)
 
 ### Raw Data
 
-We are using the dataset [1.4 Million Phone Reviews](https://www.kaggle.com/masaladata/14-million-cell-phone-reviews) from Kaggle. This dataset encompasses over 1.4 million reviews across various brands, models, countries, languages, and websites.
+We are using the dataset [1.4 Million Phone Reviews](https://www.kaggle.com/masaladata/14-million-cell-phone-reviews) from Kaggle. This dataset encompasses over 1.4 million reviews across various brands, models, countries, languages, and websites. The reviews include a block of text, as well as a rating on a scale of 1 to 10. It appears that most of these ratings were not originally given on this scale, but the people who collected this data had already done the work of adjusting the rating to be out of 10.
 
 ```{r}
 review1 <- read.csv("data/phone_user_review_file_1.csv")
@@ -51,9 +53,9 @@ reviews
 
 In order to clean up the data, there are some changes we want to make. First, the phone_url serves as an identifier for the make and model of a phone; however, all phone-url entries start with /cellphone/ and end with /. We remove these to get a cleaned version of phone_url that we will use in the next data wrangling process. We chose to use phone_url instead of product as the phone identifier, since the values are more consistent in this attribute.
 
-We also need to type convert the date from M/D/Y format into a digital date value. This can be done with the conversion function [as.Date](https://www.statmethods.net/input/dates.html).
+We also need to type convert the date from M/D/Y format into a digital date value to allow us to analyse the date numerically and not as a string. This can be done with the conversion function [as.Date](https://www.statmethods.net/input/dates.html).
 
-Lastly, we decide to omit any data that contains NA values. Making any calculations with attributes that are NA would mess with the calculations. Because we have over 1.4 million reviews that we pull from, we have the luxury of being able to omit all NA entries without hurting the magnitide of our sample size. (1.4m -> 1.3m)
+Lastly, we decide to omit any data that contains NA values. This is done by feeding the dataframe through the function na.omit. Making any calculations with attributes that are NA would mess with the calculations. Because we have over 1.4 million reviews that we pull from, we have the luxury of being able to omit all NA entries without hurting the magnitide of our sample size. (The dataset went from 1.4 million values to 1.3 million.)
 
 ```{r}
 reviews_bm <- reviews %>%
@@ -62,7 +64,7 @@ reviews_bm <- reviews %>%
 reviews_bm
 ```
 
-The most common way people refer to a phone is by it's brand and model name: E.g. Samsung Galaxy S8. These only exist together as part of the phone_url, but in order to do analysis on only a specific brand of phone or a specific model we need to separate them. Fortunately, the phone_url uses a standardized layout: [brand]-[model]. All we have to do is separate phone_url on the first - character.
+The most common way people refer to a phone is by it's brand and model name: E.g. Samsung Galaxy S8. These only exist together as part of the phone_url, but in order to do analysis on only a specific brand of phone or a specific model we need to separate them. Fortunately, the phone_url uses a standardized layout: [brand]-[model]. All we have to do is separate phone_url on the first - character. This is done with the tidyr function [separate](https://www.rdocumentation.org/packages/tidyr/versions/0.8.3/topics/separate), with the extra flag set to "merge" so that the phone_url only gets split on the first "-".
 
 ## EDA
 
@@ -84,7 +86,7 @@ country_reviews %>%
   geom_bar(data=subset(country_reviews, mean_score==max(mean_score)), aes(country, mean_score), fill="cyan", stat="identity") 
 
 ```
-we were interested in seeing the average score by country of the user. From this, we can see that the most optimistic reviewers are from Switzerland (country code ch) and the most pessimistic are from India (country code in). This was achieved by grouping the data by country and summarized by the mean score. This was then plotted with a bar graph, and the minimum and maximum values were highlighted. 
+We were interested in seeing the average score by country of the user. This was achieved by grouping the data by country using the function [group_by](https://dplyr.tidyverse.org/reference/group_by.html) and summarizing the grouped data by the mean score using [summarize](https://dplyr.tidyverse.org/reference/summarise.html). This was then plotted with a bar graph using [ggplot](https://www.statmethods.net/advgraphs/ggplot2.html) and [geom_bar](https://ggplot2.tidyverse.org/reference/geom_bar.html), and the minimum and maximum values were highlighted with a subset of the bars. From this, we can see that the most optimistic reviewers are from Switzerland (country code ch) and the most pessimistic are from India (country code in). 
 
 We also deciding looking at the way in which reviews change over time. Here we look at a specific example that we suspected to have a change in rating.
 
@@ -102,7 +104,7 @@ note_reviews %>%
   geom_point() + geom_smooth(method=lm) + geom_vline(xintercept = as.numeric(as.Date("2016-09-02")), color="red")
 
 ```
-Knowing about the [unfortunate events](https://www.theverge.com/2016/9/2/12767670/samsung-galaxy-note-7-recall-fire-risk) following the release of the Note 7, we were interested to see what the effect was on the online rating. We mapped the mean score for the phone over time, and plotted the date when the phone was recalled (September 2nd, 2016). To do this, we filtered the dataframe by phone name to only display data about the Note 7, then grouped by date and summarized by the mean score to get the mean score for each day. Then, we chose to display the results with a smoothed line graph to illustrate how the scores trended over time. It can be seen that the scores started to drop shortly before the phone was recalled. 
+Knowing about the [unfortunate events](https://www.theverge.com/2016/9/2/12767670/samsung-galaxy-note-7-recall-fire-risk) following the release of the Note 7, we were interested to see what the effect was on the online rating. We mapped the mean score for the phone over time, and plotted the date when the phone was recalled (September 2nd, 2016). To do this, we filtered the dataframe by phone name to only display data about the Note 7, then grouped by date and summarized by the mean score to get the mean score for each day. Then, we chose to display the results with a smoothed line graph using [geom_smooth](https://ggplot2.tidyverse.org/reference/geom_smooth.html) to illustrate how the scores trended over time. We prefer to use geom_smooth in this case to see a general trend over time instead of simply connecting the points like a regular line graph. We then added a vertical line indicating the day phones started to malfunction and were recalled, the date of which was put manually as 2016-09-02. It can be seen that the scores started to drop a little before the phone was recalled. 
 
 ## Hypothesis Testing and ML
 
