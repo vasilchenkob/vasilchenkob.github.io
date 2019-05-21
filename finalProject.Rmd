@@ -12,8 +12,11 @@ output: html_document
 ## Libraries
 
 ```{r}
+library(plyr)
 library(stringr)
 library(tidyverse)
+library(lubridate)
+library(broom)
 ```
 
 ## Data
@@ -35,7 +38,7 @@ review6 <- read.csv("data/phone_user_review_file_6.csv")
 reviews <- rbind.fill(review1, review2, review3, review4, review5, review6)
 ```
 
-The data is contained within six different CSVs that all have the same format, so they can easily be stitched together into one large data frame with rbind from the dplyr package in tidyverse.
+The data is contained within six different CSVs that all have the same format, so they can easily be stitched together into one large data frame with rbind from the plyr.
 
 ### Data Cleaning
 
@@ -49,7 +52,7 @@ reviews <- reviews %>%
 reviews
 ```
 
-In order to clean up the data, there are some changes we want to make. First, the phone_url serves as an identifier for the make and model of a phone; however, all phone-url entries start with /cellphone/ and end with /. We remove these to get a cleaned version of phone_url that we will use in the next data wrangling process.
+In order to clean up the data, there are some changes we want to make. First, the phone_url serves as an identifier for the make and model of a phone; however, all phone_url entries start with /cellphone/ and end with /. We remove these to get a cleaned version of phone_url that we will use in the next data wrangling process.
 
 We also need to type convert the date from M/D/Y format into a digital date value.
 
@@ -66,18 +69,11 @@ The most common way people refer to a phone is by it's brand and model name: E.g
 
 ## EDA
 
-```{r}
-reviews_bm %>%
-  group_by(brand, model) %>%
-  summarize(count = n(), mean_score = mean(score)) %>%
-  sort(mean_score)
-```
-
 ### Galaxy Note 7
 ```{r}
 
-note_reviews = reviews %>%
-  filter(phone_url=="samsung-galaxy-note-7") %>%
+note_reviews = reviews_bm %>%
+  filter(model=="galaxy-note-7") %>%
   group_by(date) %>%
   summarize(mean_score=mean(score))
 note_reviews
@@ -91,15 +87,14 @@ Knowing about the [unfortunate events](https://www.theverge.com/2016/9/2/1276767
 
 ### Country Optimism
 ```{r}
-country_reviews = reviews %>%
-  filter(!is.na(score)) %>%
+country_reviews = reviews_bm %>%
   group_by(country) %>%
   summarize(mean_score = mean(score))
 country_reviews
 
 country_reviews %>%
   ggplot() +
-  geom_bar(aes(country,mean_score), stat = "identity") + coord_cartesian(ylim=c(6.0,10.0)) +
+  geom_bar(aes(reorder(country, -mean_score),mean_score), stat = "identity") + coord_cartesian(ylim=c(6.0,10.0)) +
   geom_bar(data=subset(country_reviews, mean_score==min(mean_score)), aes(country, mean_score), fill="red", stat="identity") +
   geom_bar(data=subset(country_reviews, mean_score==max(mean_score)), aes(country, mean_score), fill="cyan", stat="identity") 
 
@@ -108,3 +103,49 @@ we were interested in seeing the average score by country of the user. From this
 
 
 ## Hypothesis Testing and ML
+
+```{r}
+reviews_bm %>%
+  filter(date > 1999-01-01) %>%
+  mutate(year = format(date, "%Y")) %>%
+  ggplot() +
+  geom_boxplot(aes(factor(year), score))
+```
+
+```{r}
+reviews_y <- reviews_bm %>%
+  filter(date > 1999-01-01) %>%
+  mutate(year = as.numeric(format(date, "%Y")))
+
+fit <- lm(score~year, data = reviews_y)
+tidy(fit)
+```
+
+```{r}
+brand_reviews <- reviews_y %>%
+  group_by(brand) %>%
+  summarize(mean_score = mean(score), count = n()) %>%
+  filter(count >= 1000)
+
+top_10_brands <- brand_reviews[order(brand_reviews$mean_score, decreasing=T),] %>%
+  head(10)
+
+reviews_top_10 <- top_10_brands %>% 
+  join(reviews_y) %>%
+  na.omit()
+
+reviews_top_10 %>%
+  ggplot(aes(factor(year), score)) +
+  facet_grid(brand~.) +
+  geom_boxplot()
+```
+
+```{r}
+brand_fit <- lm(score~year+brand, data = reviews_top_10)
+tidy(brand_fit)
+```
+
+
+
+
+
