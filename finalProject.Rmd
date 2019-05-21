@@ -1,0 +1,36 @@
+---
+title: "finalProject"
+author: "Eric Appelbaum & Barbara Valischenko"
+date: "May 22, 2019"
+output: html_document
+---
+
+# Yelp
+
+## Intro
+
+## Data
+
+### Raw Data
+
+The raw data is the Yelp dataset which can be found on [Kaggle](https://www.kaggle.com/yelp-dataset/yelp-dataset) and the [Yelp Website](https://www.yelp.com/dataset/).
+
+The data comes in 6 JSON objects:
+- Businesses
+- Check ins
+- Reviews
+- Tips
+- Users
+- 
+
+In order to import this data into an R dataframe, a few alterations must be made from the original JSON format:
+- null must be converted to NA
+- nested attributes must be flattened out
+
+Fortunately, many packages exist that will do this conversion for you, such as _______ which we will use here.
+
+### Alterations
+
+## EDA
+
+## Hypothesis Testing and ML
