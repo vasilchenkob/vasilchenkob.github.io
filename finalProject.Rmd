@@ -127,7 +127,7 @@ note_reviews %>%
 ```
 Knowing about the [unfortunate events](https://www.theverge.com/2016/9/2/12767670/samsung-galaxy-note-7-recall-fire-risk) following the release of the Note 7, we were interested to see what the effect was on the online rating. We mapped the mean score for the phone over time, and plotted the date when the phone was recalled (September 2nd, 2016). To do this, we filtered the dataframe by phone name to only display data about the Note 7, then grouped by date and summarized by the mean score to get the mean score for each day. Then, we chose to display the results with a smoothed line graph using [geom_smooth](https://ggplot2.tidyverse.org/reference/geom_smooth.html) to illustrate how the scores trended over time. We prefer to use geom_smooth in this case to see a general trend over time instead of simply connecting the points like a regular line graph. We then added a vertical line indicating the day phones started to malfunction and were recalled, the date of which was put manually as 2016-09-02. It can be seen that the scores started to drop a little before the phone was recalled.
 
-## Hypothesis Testing and ML
+## Hypothesis Testing and Linear Regression
 
 Now we will be taking those top 10 most reviewed brands and comparing how their review performance over the years compares to the review performance of the cellphone industry overall as well as how they compare to each other. The first thing to do is to figure out the status of the industry overall.
 
@@ -164,37 +164,69 @@ top_10_brands <- brand_reviews[order(brand_reviews$count, decreasing=T),] %>%
 reviews_top_10 <- top_10_brands %>%
   join(reviews_y) %>%
   na.omit()
+```
 
-
+```{r}
 reviews_top_10 %>%
   filter(brand == "huawei") %>%
   ggplot(aes(factor(year), score)) +
-  geom_boxplot()
+  geom_boxplot() + labs(title="huawei")
 
 reviews_top_10 %>%
   filter(brand == "samsung") %>%
   ggplot(aes(factor(year), score)) +
-  geom_boxplot()
+  geom_boxplot() + labs(title="samsung")
 
 reviews_top_10 %>%
   filter(brand == "apple") %>%
   ggplot(aes(factor(year), score)) +
-  geom_boxplot()
+  geom_boxplot() + labs(title="apple")
 
 reviews_top_10 %>%
   filter(brand == "nokia") %>%
   ggplot(aes(factor(year), score)) +
-  geom_boxplot()
+  geom_boxplot() + labs(title="nokia")
 
 reviews_top_10 %>%
   filter(brand == "sony") %>%
   ggplot(aes(factor(year), score)) +
-  geom_boxplot()
+  geom_boxplot() + labs(title="sony")
+
+reviews_top_10 %>%
+  filter(brand == "lg") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot() + labs(title="lg")
+
+reviews_top_10 %>%
+  filter(brand == "motorola") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot() + labs(title="motorola")
+
+reviews_top_10 %>%
+  filter(brand == "blackberry") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot() + labs(title="blackberry")
+
+reviews_top_10 %>%
+  filter(brand == "htc") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot() + labs(title="htc")
+
+reviews_top_10 %>%
+  filter(brand == "lenovo") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot() + labs(title="lenovo")
 ```
 
+Here we get the distributions over the years for the top 10 most reviewed brands. These boxplots are fairly overwhelming, with only a few yielding information very clearly: such as, lenovo is clearly on a downward trend. When comparing so many variables, a linear regression is the best way.
+
 ```{r}
-brand_fit <- lm(score~year+brand, data = reviews_top_10)
+brand_fit <- lm(score~year*brand, data = reviews_top_10)
 tidy(brand_fit)
 ```
 
-Knowing that for at least one case time has an effect on reviews, we can look at the data more generally. With the help of linear regression we can determine if time has an affect on phone scores across all phones.
+In this linear regression, we want to see how the combination of year and brand affect score. For this reason we use "*" in the formula. Now, this table takes some unpacking, but it can tell us some very interesting things. First, I want to mention that all p-values are very low, indicating that all of these results are statistically significant. What we will be focusing on are the year and year:[brand] rows. In multivariate linear regression, the lm function chooses the first category alphabetically as the benchmark - in the case it is Apple. 
+
+With this knowlege, we see that over the years, Apple sees an increase in review scores of .15 points/year, far higher than the average we saw before. From the year:[brand] rows, we actually see that every brand's change in score per year is less than Apple's (i.e. Blackblerry changes .059 less per year than Apple, putting it at ~.097/year). All brands that are less than -.15 on this chart are experiencing a negative score change per year (e.g. HTC, Lenovo, Nokia, Sony).
+
+We can assume that, due to the vast difference between top performing brands and the industry average, the majority of the increase that is observed is coming from the top few.
