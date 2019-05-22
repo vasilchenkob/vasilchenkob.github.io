@@ -88,7 +88,26 @@ country_reviews %>%
 ```
 We were interested in seeing the average score by country of the user. This was achieved by grouping the data by country using the function [group_by](https://dplyr.tidyverse.org/reference/group_by.html) and summarizing the grouped data by the mean score using [summarize](https://dplyr.tidyverse.org/reference/summarise.html). This was then plotted with a bar graph using [ggplot](https://www.statmethods.net/advgraphs/ggplot2.html) and [geom_bar](https://ggplot2.tidyverse.org/reference/geom_bar.html), and the minimum and maximum values were highlighted with a subset of the bars. From this, we can see that the most optimistic reviewers are from Switzerland (country code ch) and the most pessimistic are from India (country code in). 
 
-We also deciding looking at the way in which reviews change over time. Here we look at a specific example that we suspected to have a change in rating.
+We also deciding looking at the way in which reviews change over time.
+
+### Brand Ratings
+```{r}
+
+brand_reviews = reviews_bm %>%
+  filter(!is.na(score)) %>%
+  group_by(brand) %>%
+  summarize(mean_score = mean(score), count=n())
+
+top_10_brands <- brand_reviews[order(brand_reviews$count, decreasing=T),] %>% head(10)
+
+top_10_brands %>%
+  ggplot() +
+  geom_bar(aes(reorder(brand, -mean_score),mean_score), stat = "identity") + coord_cartesian(ylim=c(6.0,10.0)) + labs(x="brand")
+
+```
+In order to see how people are rating the world's most popular phone brands, we decided to filter out the top 10 brands based on the number of reviews. We do this by first grouping the dataframe by brand, then summarizing by the mean score as well as the count of entities. We then order this dataframe by the count in decreasing order and take the first 10 entities using the function head. We then plot this once again using ggplot and geom_bar. 
+
+Next we look at a specific example that we suspected to have a change in rating.
 
 ### Galaxy Note 7
 ```{r}
