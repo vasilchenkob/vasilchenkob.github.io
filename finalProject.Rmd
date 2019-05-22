@@ -129,6 +129,8 @@ Knowing about the [unfortunate events](https://www.theverge.com/2016/9/2/1276767
 
 ## Hypothesis Testing and ML
 
+Now we will be taking those top 10 most reviewed brands and comparing how their review performance over the years compares to the review performance of the cellphone industry overall as well as how they compare to each other. The first thing to do is to figure out the status of the industry overall.
+
 ```{r}
 reviews_bm %>%
   filter(date > 1999-01-01) %>%
@@ -136,6 +138,8 @@ reviews_bm %>%
   ggplot() +
   geom_boxplot(aes(factor(year), score))
 ```
+
+We took all of the reviews since 1999 and gathered them together by year. We then took each year and visualized the disribution via a boxplot. From just this visualization we can tell a few things: the median of each yearly distribution has increased recently and the [interquartile range](https://stattrek.com/statistics/dictionary.aspx?definition=interquartile%20range) has gotten smaller. We cannot, however, tell how the general trend of the data. In order to do this, we will use [linear regression](https://medium.com/data-science-group-iitr/linear-regression-back-to-basics-e4819829d78b).
 
 ```{r}
 reviews_y <- reviews_bm %>%
@@ -145,6 +149,8 @@ reviews_y <- reviews_bm %>%
 fit <- lm(score~year, data = reviews_y)
 tidy(fit)
 ```
+
+We take the data we had before, and utilize the [lm function](https://www.rdocumentation.org/packages/stats/versions/3.6.0/topics/lm) to create the linear regression. We use the formula "score~year" because we want to see how score changes as a result of the increase in year. This regression estimates that every year, scores generally increase by .03 points. While this may be small, the [p-value](https://blog.minitab.com/blog/adventures-in-statistics-2/how-to-interpret-regression-analysis-results-p-values-and-coefficients) indicates that this is statistically significant value that closely adheres to the genreal trend of the data.
 
 ```{r}
 brand_reviews <- reviews_y %>%
@@ -159,14 +165,31 @@ reviews_top_10 <- top_10_brands %>%
   join(reviews_y) %>%
   na.omit()
 
-for (i in top_10_brands) {
-  reviews_top_10 %>%
-    filter(brand == i[brand]) %>%
-    ggplot(aes(factor(year), score)) +
-    geom_boxplot()
-}
-reviews_top_10 %>%
 
+reviews_top_10 %>%
+  filter(brand == "huawei") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot()
+
+reviews_top_10 %>%
+  filter(brand == "samsung") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot()
+
+reviews_top_10 %>%
+  filter(brand == "apple") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot()
+
+reviews_top_10 %>%
+  filter(brand == "nokia") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot()
+
+reviews_top_10 %>%
+  filter(brand == "sony") %>%
+  ggplot(aes(factor(year), score)) +
+  geom_boxplot()
 ```
 
 ```{r}
