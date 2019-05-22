@@ -51,7 +51,7 @@ reviews$date = as.Date(reviews$date, "%m/%d/%Y")
 reviews <- reviews %>%
   na.omit()
 
-reviews
+reviews %>% head(10)
 ```
 
 In order to clean up the data, there are some changes we want to make. First, the phone_url serves as an identifier for the make and model of a phone; however, all phone-url entries start with /cellphone/ and end with /. We remove these to get a cleaned version of phone_url that we will use in the next data wrangling process. We chose to use phone_url instead of product as the phone identifier, since the values are more consistent in this attribute.
@@ -64,7 +64,7 @@ Lastly, we decide to omit any data that contains NA values. This is done by feed
 reviews_bm <- reviews %>%
   separate(phone_url, c("brand", "model"), sep = "-", extra = "merge")
 
-reviews_bm
+reviews_bm %>% head(10)
 ```
 
 The most common way people refer to a phone is by it's brand and model name: E.g. Samsung Galaxy S8. These only exist together as part of the phone_url, but in order to do analysis on only a specific brand of phone or a specific model we need to separate them. Fortunately, the phone_url uses a standardized layout: [brand]-[model]. All we have to do is separate phone_url on the first - character. This is done with the tidyr function [separate](https://www.rdocumentation.org/packages/tidyr/versions/0.8.3/topics/separate), with the extra flag set to "merge" so that the phone_url only gets split on the first "-".
@@ -78,8 +78,6 @@ Now that our data is clean and usable, we can think about what interesting patte
 country_reviews = reviews_bm %>%
   group_by(country) %>%
   summarize(mean_score = mean(score))
-
-country_reviews
 
 country_reviews %>%
   ggplot() +
@@ -118,7 +116,7 @@ note_reviews = reviews %>%
   filter(phone_url=="samsung-galaxy-note-7") %>%
   group_by(date) %>%
   summarize(mean_score=mean(score))
-note_reviews
+
 
 note_reviews %>%
   ggplot(aes(date,mean_score)) +
