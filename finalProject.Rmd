@@ -127,17 +127,21 @@ brand_reviews <- reviews_y %>%
   summarize(mean_score = mean(score), count = n()) %>%
   filter(count >= 1000)
 
-top_10_brands <- brand_reviews[order(brand_reviews$mean_score, decreasing=T),] %>%
+top_10_brands <- brand_reviews[order(brand_reviews$count, decreasing=T),] %>%
   head(10)
 
 reviews_top_10 <- top_10_brands %>% 
   join(reviews_y) %>%
   na.omit()
 
+for (i in top_10_brands) {
+  reviews_top_10 %>%
+    filter(brand == i[brand]) %>%
+    ggplot(aes(factor(year), score)) +
+    geom_boxplot()
+}
 reviews_top_10 %>%
-  ggplot(aes(factor(year), score)) +
-  facet_grid(brand~.) +
-  geom_boxplot()
+  
 ```
 
 ```{r}
